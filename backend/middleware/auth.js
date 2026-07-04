@@ -1,0 +1,4 @@
+const jwt=require('jsonwebtoken'),User=require('../models/User');
+const protect=async(req,res,next)=>{let t;if(req.headers.authorization&&req.headers.authorization.startsWith('Bearer')){try{t=req.headers.authorization.split(' ')[1];const d=jwt.verify(t,process.env.JWT_SECRET);req.user=await User.findById(d.id).select('-password');next()}catch(e){return res.status(401).json({success:false,message:'Token failed'})}}if(!t)return res.status(401).json({success:false,message:'No token'})};
+const admin=(req,res,next)=>{if(req.user&&req.user.role==='admin')next();else return res.status(403).json({success:false,message:'Not admin'})};
+module.exports={protect,admin};

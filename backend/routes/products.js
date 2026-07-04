@@ -1,0 +1,3 @@
+const r=require('express').Router(),{protect,admin}=require('../middleware/auth'),{getProducts,getProduct,createProduct,updateProduct,deleteProduct,getTopProducts,getLowStockProducts}=require('../controllers/productController');
+r.get('/top',protect,getTopProducts);r.get('/low-stock',protect,admin,getLowStockProducts);r.get('/',protect,getProducts);r.get('/:id',getProduct);r.post('/',protect,admin,createProduct);r.put('/:id',protect,admin,updateProduct);r.delete('/:id',protect,admin,deleteProduct);
+module.exports=r;

@@ -1,0 +1,4 @@
+const mongoose=require('mongoose');
+const schema=new mongoose.Schema({name:{type:String,required:true,trim:true},slug:{type:String,unique:true,lowercase:true,sparse:true},description:{type:String,default:''},category:{type:String,enum:['electronics','clothing','home_garden','sports','books','toys','food','other'],required:true},price:{type:Number,required:true,min:0},comparePrice:{type:Number,min:0},cost:{type:Number,min:0},sku:{type:String,unique:true,sparse:true},stock:{type:Number,required:true,min:0,default:0},lowStockThreshold:{type:Number,default:10},images:[{type:String}],thumbnail:{type:String,default:''},rating:{type:Number,min:0,max:5,default:0},reviewCount:{type:Number,default:0},totalSold:{type:Number,default:0},status:{type:String,enum:['active','draft','archived'],default:'active'},tags:[{type:String}]},{timestamps:true});
+schema.index({category:1,status:1});schema.index({totalSold:-1});
+module.exports=mongoose.model('Product',schema);

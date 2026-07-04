@@ -1,0 +1,3 @@
+const r=require('express').Router(),{protect,admin}=require('../middleware/auth'),{getUsers,getUser,updateUser,deleteUser,getUserStats,getPublicUsers}=require('../controllers/userController');
+r.get('/stats',protect,admin,getUserStats);r.get('/',protect,admin,getUsers);r.get('/public',getPublicUsers);r.get('/:id',protect,getUser);r.put('/:id',protect,admin,updateUser);r.delete('/:id',protect,admin,deleteUser);
+module.exports=r;

@@ -1,0 +1,3 @@
+const r=require('express').Router(),{protect}=require('../middleware/auth'),{getOverview,getRevenueChart,getSalesByCategory,getOrderStats,getActivity}=require('../controllers/dashboardController');
+r.get('/overview',protect,getOverview);r.get('/revenue-chart',protect,getRevenueChart);r.get('/sales-by-category',protect,getSalesByCategory);r.get('/order-stats',protect,getOrderStats);r.get('/activity',protect,getActivity);
+module.exports=r;

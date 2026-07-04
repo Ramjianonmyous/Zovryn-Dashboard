@@ -1,0 +1,4 @@
+const mongoose=require('mongoose');
+const schema=new mongoose.Schema({user:{type:mongoose.Schema.Types.ObjectId,ref:'User',required:true},title:{type:String,required:true},message:{type:String,required:true},type:{type:String,enum:['order','user','review','stock','payment','system','message'],default:'system'},icon:{type:String,default:'lucide:bell'},color:{type:String,default:'blue'},read:{type:Boolean,default:false},link:{type:String,default:''},metadata:{type:mongoose.Schema.Types.Mixed,default:{}}},{timestamps:true});
+schema.index({user:1,read:1,createdAt:-1});
+module.exports=mongoose.model('Notification',schema);
