@@ -620,63 +620,59 @@ function App() {
                 Sign In
               </button>
 
-              {import.meta.env.DEV && (
-                <>
-                  <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
-                    </div>
-                    <div className="relative flex justify-center text-xs">
-                      <span className="px-2 bg-white dark:bg-slate-800 text-slate-500">Quick Fill</span>
-                    </div>
-                  </div>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-2 bg-white dark:bg-slate-800 text-slate-500">Quick Fill</span>
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <button 
-                      onClick={() => { setLoginEmail('admin@apex.io'); setLoginPassword('admin123'); handleLogin('admin@apex.io', 'admin123'); }}
-                      className="bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs"
-                    >
-                      <iconify-icon icon="lucide:shield" width="14"></iconify-icon>
-                      Fill & Login Admin
-                    </button>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => { setLoginEmail('admin@apex.io'); setLoginPassword('admin123'); handleLogin('admin@apex.io', 'admin123'); }}
+                  className="bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs"
+                >
+                  <iconify-icon icon="lucide:shield" width="14"></iconify-icon>
+                  Fill & Login Admin
+                </button>
+                
+                <div 
+                  className="relative"
+                  onMouseEnter={() => {
+                    if (fillUserTimeoutRef.current) clearTimeout(fillUserTimeoutRef.current);
+                    setShowFillUserDropdown(true);
+                  }}
+                  onMouseLeave={() => {
+                    fillUserTimeoutRef.current = setTimeout(() => {
+                      setShowFillUserDropdown(false);
+                    }, 500); // 500ms delay for a slower feel
+                  }}
+                >
+                  <button 
+                    className="w-full h-full bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs"
+                  >
+                    <iconify-icon icon="lucide:user" width="14"></iconify-icon>
+                    Fill User
+                    <iconify-icon icon="lucide:chevron-down" width="12" className="ml-auto"></iconify-icon>
+                  </button>
+                  
+                  {/* Dropdown on Hover */}
+                  <div className={`absolute left-0 bottom-full mb-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 ${showFillUserDropdown ? 'block' : 'hidden'}`}>
+                    <div className="px-3 py-1.5 text-xs font-semibold text-slate-500 border-b border-slate-100 dark:border-slate-700 mb-1">Select a Real User</div>
                     
-                    <div 
-                      className="relative"
-                      onMouseEnter={() => {
-                        if (fillUserTimeoutRef.current) clearTimeout(fillUserTimeoutRef.current);
-                        setShowFillUserDropdown(true);
-                      }}
-                      onMouseLeave={() => {
-                        fillUserTimeoutRef.current = setTimeout(() => {
-                          setShowFillUserDropdown(false);
-                        }, 500); // 500ms delay for a slower feel
-                      }}
-                    >
-                      <button 
-                        className="w-full h-full bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs"
-                      >
-                        <iconify-icon icon="lucide:user" width="14"></iconify-icon>
-                        Fill User
-                        <iconify-icon icon="lucide:chevron-down" width="12" className="ml-auto"></iconify-icon>
-                      </button>
-                      
-                      {/* Dropdown on Hover */}
-                      <div className={`absolute left-0 bottom-full mb-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 ${showFillUserDropdown ? 'block' : 'hidden'}`}>
-                        <div className="px-3 py-1.5 text-xs font-semibold text-slate-500 border-b border-slate-100 dark:border-slate-700 mb-1">Select a Real User</div>
-                        
-                        <div className="max-h-60 overflow-y-auto">
-                          {publicUsers.map(u => (
-                            <a href="#" key={u._id} onClick={(e) => { e.preventDefault(); setLoginEmail(u.email); setLoginPassword('password123'); handleLogin(u.email, 'password123'); }} className="flex items-center justify-between px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                              <span>{u.name}</span>
-                              <span className={`text-[10px] ${u.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} px-1.5 py-0.5 rounded-full font-medium`}>{u.status === 'active' ? 'Active' : 'Inactive'}</span>
-                            </a>
-                          ))}
-                        </div>
-                      </div>
+                    <div className="max-h-60 overflow-y-auto">
+                      {publicUsers.map(u => (
+                        <a href="#" key={u._id} onClick={(e) => { e.preventDefault(); setLoginEmail(u.email); setLoginPassword('password123'); handleLogin(u.email, 'password123'); }} className="flex items-center justify-between px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                          <span>{u.name}</span>
+                          <span className={`text-[10px] ${u.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} px-1.5 py-0.5 rounded-full font-medium`}>{u.status === 'active' ? 'Active' : 'Inactive'}</span>
+                        </a>
+                      ))}
                     </div>
                   </div>
-                </>
-              )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
