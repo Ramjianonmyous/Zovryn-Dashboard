@@ -1731,28 +1731,32 @@ function App() {
                                   </tr>
                               </thead>
                               <tbody>
-                                   {users.map(user => (
-                                       <tr key={user._id} className="border-b border-slate-50 dark:border-slate-800/50">
+                                   {users.map(u => (
+                                       <tr key={u._id} className="border-b border-slate-50 dark:border-slate-800/50">
                                            <td className="px-5 py-3.5 flex items-center gap-3">
-                                               <img src={user.avatar || `https://picsum.photos/seed/${user._id}/40/40.jpg`} className="w-10 h-10 rounded-full" alt="" />
+                                               <img src={u.avatar || `https://picsum.photos/seed/${u._id}/40/40.jpg`} className="w-10 h-10 rounded-full" alt="" />
                                                <div>
-                                                   <p className="text-sm font-medium text-slate-900 dark:text-white">{user.name}</p>
-                                                   <p className="text-xs text-slate-500">{user.email}</p>
+                                                   <p className="text-sm font-medium text-slate-900 dark:text-white">{u.name}</p>
+                                                   <p className="text-xs text-slate-500">{u.email}</p>
                                                </div>
                                            </td>
-                                           <td className="px-5 py-3.5 text-sm text-slate-700 dark:text-slate-300">{user.role}</td>
+                                           <td className="px-5 py-3.5 text-sm text-slate-700 dark:text-slate-300">{u.role}</td>
                                            <td className="px-5 py-3.5">
-                                               <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${user.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
-                                                   {user.status === 'active' ? 'Active' : 'Inactive'}
+                                               <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${u.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
+                                                   {u.status === 'active' ? 'Active' : 'Inactive'}
                                                </span>
                                            </td>
                                            <td className="px-5 py-3.5 text-right">
-                                               <button 
-                                                   onClick={() => toggleUserStatus(user._id, user.status)}
-                                                   className={`text-sm font-medium ${user.status === 'active' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}
-                                               >
-                                                   {user.status === 'active' ? 'Deactivate' : 'Activate'}
-                                               </button>
+                                               {u.role?.toLowerCase() === 'admin' || u._id === user?._id ? (
+                                                   <span className="text-xs text-slate-400 dark:text-slate-500 italic bg-slate-100 dark:bg-slate-800/50 px-2.5 py-1 rounded-full font-medium select-none">Protected</span>
+                                               ) : (
+                                                   <button 
+                                                       onClick={() => toggleUserStatus(u._id, u.status)}
+                                                       className={`text-sm font-medium ${u.status === 'active' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}
+                                                   >
+                                                       {u.status === 'active' ? 'Deactivate' : 'Activate'}
+                                                   </button>
+                                               )}
                                            </td>
                                        </tr>
                                    ))}
