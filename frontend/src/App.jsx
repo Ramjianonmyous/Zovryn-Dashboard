@@ -10,6 +10,56 @@ function App() {
   const [notifDropdownShow, setNotifDropdownShow] = useState(false);
   const [accountDropdownShow, setAccountDropdownShow] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const [promptMessage, setPromptMessage] = useState('');
+  const [promptError, setPromptError] = useState('');
+  const [promptInput, setPromptInput] = useState('');
+  const [promptAttempt, setPromptAttempt] = useState(1);
+  const promptResolveRef = useRef(null);
+
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const alertResolveRef = useRef(null);
+
+  const triggerCustomPrompt = (message, attemptNum, errorMsg = '') => {
+    setPromptMessage(message);
+    setPromptAttempt(attemptNum);
+    setPromptError(errorMsg);
+    setPromptInput('');
+    setShowPromptModal(true);
+    return new Promise((resolve) => {
+      promptResolveRef.current = resolve;
+    });
+  };
+
+  const triggerCustomAlert = (title, message) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setShowAlertModal(true);
+    return new Promise((resolve) => {
+      alertResolveRef.current = resolve;
+    });
+  };
+
+  const handlePromptSubmit = (e) => {
+    e.preventDefault();
+    if (!promptInput.trim()) return;
+    setShowPromptModal(false);
+    if (promptResolveRef.current) {
+      promptResolveRef.current(promptInput);
+      promptResolveRef.current = null;
+    }
+  };
+
+  const handlePromptCancel = () => {
+    setShowPromptModal(false);
+    if (promptResolveRef.current) {
+      promptResolveRef.current(null);
+      promptResolveRef.current = null;
+    }
+  };
+
   const [showFillUserDropdown, setShowFillUserDropdown] = useState(false);
   const [publicUsers, setPublicUsers] = useState([]);
   const [mails, setMails] = useState([
@@ -46,6 +96,58 @@ function App() {
         localStorage.setItem('token', data.data.token);
         setUser(data.data);
         setIsLoggedIn(true);
+      } else if (res.status === 401 && data.requiresMasterPhrase) {
+        let attempt = 1;
+        let phrase = '';
+        let success = false;
+        let errorMsg = '';
+        
+        while (attempt <= 3 && !success) {
+          let promptMessage = "";
+          if (attempt === 1) {
+            promptMessage = "🔑 Please enter the Master Security Phrase to authorize login access to this account:";
+          } else if (attempt === 2) {
+            promptMessage = "⚠️ WARNING: Incorrect phrase entered! This attempt has been logged. Please enter the correct Master Security Phrase:";
+          } else {
+            promptMessage = "🚨 FINAL ATTEMPT: One more incorrect entry will temporarily lock access. Enter the Master Security Phrase:";
+          }
+          
+          phrase = await triggerCustomPrompt(promptMessage, attempt, errorMsg);
+          
+          if (phrase === null) {
+            alert('Verification cancelled');
+            return;
+          }
+          
+          try {
+            const retryRes = await fetch(`${API_BASE}/api/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password, masterPhrase: phrase })
+            });
+            const retryData = await retryRes.json();
+            if (retryRes.ok && retryData.success) {
+              localStorage.setItem('token', retryData.data.token);
+              setUser(retryData.data);
+              setIsLoggedIn(true);
+              success = true;
+            } else if (retryRes.status === 401 && retryData.requiresMasterPhrase) {
+              if (attempt < 3) {
+                errorMsg = `❌ Attempt ${attempt}/3 failed! Incorrect phrase.`;
+              } else {
+                await triggerCustomAlert("ACCESS DENIED", "3 incorrect attempts! The security team has been notified. Nice try, hacker! 😉");
+              }
+              attempt++;
+            } else {
+              alert(retryData.message || 'Verification failed');
+              return;
+            }
+          } catch (retryErr) {
+            console.error('Verification failed', retryErr);
+            alert('Verification failed');
+            return;
+          }
+        }
       } else {
         alert(data.message);
       }
@@ -684,7 +786,7 @@ function App() {
       {/* Sidebar */}
       <aside id="sidebar" className={`sidebar fixed top-0 left-0 h-screen bg-sidebar-bg flex flex-col z-50 ${sidebarCollapsed ? 'collapsed' : ''} ${sidebarOpen ? 'mobile-open' : ''}`}>
           {/* Logo */}
-          <div className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-border shrink-0">
+          <div onClick={toggleSidebar} className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-border shrink-0 cursor-pointer">
               <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center shrink-0">
                   <iconify-icon icon="lucide:zap" width="18" className="text-white"></iconify-icon>
               </div>
@@ -2141,6 +2243,92 @@ function App() {
           </span>
         </div>
       </a>
+
+      {showPromptModal && (
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
+          <div className="w-full max-w-md bg-white dark:bg-slate-805 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 p-8 space-y-6 relative z-10 animate-fade-in-up">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${promptAttempt === 3 ? 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400' : 'bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400'}`}>
+                <iconify-icon icon={promptAttempt === 3 ? "lucide:alert-triangle" : "lucide:shield-check"} width="20"></iconify-icon>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Security Verification</h3>
+            </div>
+            
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              {promptMessage}
+            </p>
+
+            {promptError && (
+              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-lg p-3 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                <iconify-icon icon="lucide:x-circle" width="16" className="shrink-0"></iconify-icon>
+                <span>{promptError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handlePromptSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Master Security Phrase</label>
+                <input
+                  type="password"
+                  placeholder="Enter security phrase"
+                  value={promptInput}
+                  onChange={(e) => setPromptInput(e.target.value)}
+                  className="block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button 
+                  type="button" 
+                  onClick={handlePromptCancel}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                >
+                  Verify Access
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showAlertModal && (
+        <div className="fixed inset-0 bg-slate-900/80 dark:bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 z-[10000]">
+          <div className="w-full max-w-md bg-white dark:bg-slate-850 rounded-2xl shadow-2xl border border-red-200 dark:border-red-900/50 p-8 space-y-6 text-center animate-fade-in-up">
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto text-2xl">
+              <iconify-icon icon="lucide:shield-alert" width="28"></iconify-icon>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-red-600 dark:text-red-400">{alertTitle}</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                {alertMessage}
+              </p>
+            </div>
+
+            <button 
+              type="button" 
+              onClick={() => {
+                setShowAlertModal(false);
+                if (alertResolveRef.current) {
+                  alertResolveRef.current();
+                  alertResolveRef.current = null;
+                }
+              }}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            >
+              Acknowledge
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
